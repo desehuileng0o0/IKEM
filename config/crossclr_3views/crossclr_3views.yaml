@@ -1,0 +1,59 @@
+work_dir: /cvhci/temp/ywei2/work_dir/3_120/00_xsub_notruetimeline_onlyloss1
+weights: /cvhci/temp/ywei2/work_dir/3_120/00_xsub_notruetimeline/epoch150_model.pt
+
+# feeder
+train_feeder: feeder.ntu_feeder.Feeder_dual
+train_feeder_args:
+  data_path: /cvhci/temp/ywei2/NTU120_frame50/xsub/train_position.npy
+  label_path: /cvhci/temp/ywei2/NTU-RGB-D-120/xsub/train_label.pkl
+  shear_amplitude: 0.5
+  temperal_padding_ratio: 6
+  camera_view: -1
+  motion_scale: -1
+  mmap: True
+  true_timeline: False
+
+# model
+model: net.crossclr_3views.CrosSCLR
+model_args:
+  base_encoder: net.st_gcn.Model
+  pretrain: True
+  teacher_student: False
+  feature_dim: 128
+  queue_size: 32768
+  momentum: 0.999
+  Temperature: 0.07
+  mlp: True
+  in_channels: 3
+  hidden_channels: 16 # 1/4 x channels of standard stgcn
+  hidden_dim: 256
+  num_class: 120
+  dropout: 0.5
+  graph_args:
+    layout: 'ntu-rgb+d'
+    strategy: 'spatial'
+  edge_importance_weighting: True
+
+# optim
+nesterov: False
+weight_decay: 1e-4
+base_lr: 0.1
+optimizer: SGD
+step: [100]
+
+# training
+device: [3]
+batch_size: 128
+test_batch_size: 128
+num_epoch: 150
+start_epoch: 0
+
+# cross training
+topk: 1
+view: 'all'
+cross_epoch: 0
+context: True
+
+# log
+save_interval: 30
+eval_interval: -1

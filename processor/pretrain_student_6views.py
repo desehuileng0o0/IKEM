@@ -40,7 +40,6 @@ class TS_Processor(PT_Processor):
             label = label.long().to(self.dev, non_blocking=True)
             frame = frame.long().to(self.dev, non_blocking=True)
 
-            # forward这边就没有是不是cross的判断了
             output_jsj, output_msj, output_bsj, output_asj, output_rsj, output_osj,\
             output_jsm, output_msm, output_bsm, output_asm, output_rsm, output_osm,\
             output_jsb, output_msb, output_bsb, output_asb, output_rsb, output_osb,\

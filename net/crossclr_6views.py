@@ -19,7 +19,7 @@ class CrosSCLR(nn.Module):
         T: softmax temperature (default: 0.07)
         """
 
-        super().__init__()#继承父类构造函数中的内容
+        super().__init__()
         base_encoder = import_class(base_encoder)
         self.pretrain = pretrain
         self.teacher_student = teacher_student
@@ -127,7 +127,7 @@ class CrosSCLR(nn.Module):
                                                edge_importance_weighting=edge_importance_weighting,
                                                **kwargs)
 
-            if mlp:  # hack: brute-force replacement在每个全连接前又加了一层线性层
+            if mlp:  # hack: brute-force replacement
                 dim_mlp = self.encoder_q.fc.weight.shape[1]
                 self.encoder_q.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp),
                                                   nn.ReLU(),
@@ -184,7 +184,7 @@ class CrosSCLR(nn.Module):
                                                        nn.ReLU(),
                                                        nn.Linear(dim_mlp*3, dim_mlp*3))
 
-            for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):#将可迭代的对象打包成一个个元组
+            for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
                 param_k.data.copy_(param_q.data)    # initialize
                 param_k.requires_grad = False       # not update by gradient
             for param_q, param_k in zip(self.encoder_q_motion.parameters(), self.encoder_k_motion.parameters()):
@@ -192,7 +192,7 @@ class CrosSCLR(nn.Module):
                 param_k.requires_grad = False
             for param_q, param_k in zip(self.encoder_q_bone.parameters(), self.encoder_k_bone.parameters()):
                 param_k.data.copy_(param_q.data)
-                param_k.requires_grad = False#初始化key的参数并且关闭梯度
+                param_k.requires_grad = False
             for param_q, param_k in zip(self.encoder_q_acceleration.parameters(), self.encoder_k_acceleration.parameters()):
                 param_k.data.copy_(param_q.data)
                 param_k.requires_grad = False
@@ -204,9 +204,9 @@ class CrosSCLR(nn.Module):
                 param_k.requires_grad = False
 
             # create the queue
-            self.register_buffer("queue", torch.randn(feature_dim, self.K))#模型训练时不会更新，quene里现在存的都是随机数
-            self.queue = F.normalize(self.queue, dim=0)#按列，也就是每个feature都除以这个位置的范数
-            self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))#这个暂时不知道
+            self.register_buffer("queue", torch.randn(feature_dim, self.K))
+            self.queue = F.normalize(self.queue, dim=0)
+            self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
 
             self.register_buffer("queue_motion", torch.randn(feature_dim, self.K))
             self.queue_motion = F.normalize(self.queue_motion, dim=0)
@@ -232,7 +232,6 @@ class CrosSCLR(nn.Module):
             self.K = queue_size
             self.m = momentum
             self.T = Temperature
-            #为每个view的q和k都创建baseencoder。
             self.encoder_q = base_encoder(in_channels=in_channels, hidden_channels=hidden_channels,
                                           hidden_dim=hidden_dim, num_class=feature_dim,
                                           dropout=dropout, graph_args=graph_args,
@@ -278,7 +277,7 @@ class CrosSCLR(nn.Module):
                                                dropout=dropout, graph_args=graph_args,
                                                edge_importance_weighting=edge_importance_weighting,
                                                **kwargs)
-            if mlp:  # hack: brute-force replacement在每个全连接前又加了一层线性层
+            if mlp:  # hack: brute-force replacement
                 dim_mlp = self.encoder_q.fc.weight.shape[1]
                 self.encoder_q.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp),
                                                   nn.ReLU(),
@@ -321,9 +320,9 @@ class CrosSCLR(nn.Module):
                 param_q.requires_grad = False
 
             # create the queue
-            self.register_buffer("queue", torch.randn(feature_dim, self.K))#模型训练时不会更新，quene里现在存的都是随机数
-            self.queue = F.normalize(self.queue, dim=0)#按列，也就是每个feature都除以这个位置的范数
-            self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))#这个暂时不知道
+            self.register_buffer("queue", torch.randn(feature_dim, self.K))
+            self.queue = F.normalize(self.queue, dim=0)
+            self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
 
             self.register_buffer("queue_motion", torch.randn(feature_dim, self.K))
             self.queue_motion = F.normalize(self.queue_motion, dim=0)
@@ -345,9 +344,9 @@ class CrosSCLR(nn.Module):
             self.queue_omega = F.normalize(self.queue_omega, dim=0)
             self.register_buffer("queue_ptr_omega", torch.zeros(1, dtype=torch.long))
 
-            self.register_buffer("queue_teacher", torch.randn(feature_dim*6, self.K))#模型训练时不会更新，quene里现在存的都是随机数
-            self.queue_teacher = F.normalize(self.queue_teacher, dim=0)#按列，也就是每个feature都除以这个位置的范数
-            self.register_buffer("queue_ptr_teacher", torch.zeros(1, dtype=torch.long))#这个暂时不知道
+            self.register_buffer("queue_teacher", torch.randn(feature_dim*6, self.K))
+            self.queue_teacher = F.normalize(self.queue_teacher, dim=0)
+            self.register_buffer("queue_ptr_teacher", torch.zeros(1, dtype=torch.long))
         
         else:
             #le student
@@ -367,7 +366,7 @@ class CrosSCLR(nn.Module):
                                                edge_importance_weighting=edge_importance_weighting,
                                                **kwargs)
 
-    @torch.no_grad()#修饰器，以下操作不会进行梯度回传
+    @torch.no_grad()
     def _momentum_update_key_encoder(self):
         """
         Momentum update of the key encoder
@@ -475,8 +474,8 @@ class CrosSCLR(nn.Module):
             return self.cross_training(im_q, im_k, frame, topk, context)
 
         time_scale = 50 / frame
-        im_q_motion = torch.zeros_like(im_q)#返回一个由标量0填充的张量
-        im_q_motion[:, :, :-1, :, :] = im_q[:, :, 1:, :, :] - im_q[:, :, :-1, :, :]#第二帧到最后一帧减去第一帧到倒数第二帧
+        im_q_motion = torch.zeros_like(im_q)
+        im_q_motion[:, :, :-1, :, :] = im_q[:, :, 1:, :, :] - im_q[:, :, :-1, :, :]
         for i, f in enumerate(time_scale):
             im_q_motion[i, :, :, :, :] = f * im_q_motion[i, :, :, :, :]
 
@@ -487,7 +486,7 @@ class CrosSCLR(nn.Module):
 
         im_q_bone = torch.zeros_like(im_q)
         for v1, v2 in self.Bone:
-            im_q_bone[:, :, :, v1 - 1, :] = im_q[:, :, :, v1 - 1, :] - im_q[:, :, :, v2 - 1, :]#前一个关节的坐标减去后一个关节的坐标
+            im_q_bone[:, :, :, v1 - 1, :] = im_q[:, :, :, v1 - 1, :] - im_q[:, :, :, v2 - 1, :]
         im_q_bone[:, 0:3, :, 20, :] = F.normalize(torch.cross((im_q_bone[:, 0:3, :, 1, :]-im_q_bone[:, 0:3, :, 8, :]), (im_q_bone[:, 0:3, :, 4, :]-im_q_bone[:, 0:3, :, 8, :])))
 
         im_q_rotation_axis = torch.zeros_like(im_q)
@@ -498,7 +497,7 @@ class CrosSCLR(nn.Module):
         theta_q = torch.zeros_like(im_q)
         norm_q_bone = torch.zeros_like(im_q_bone)
         norm_q_bone = F.normalize(im_q_bone,dim=1)
-        cp_q = torch.zeros_like(im_q_rotation_axis)#这是归一化后的Bone的叉积
+        cp_q = torch.zeros_like(im_q_rotation_axis)
         norm_q_rotation_axis = torch.zeros_like(im_q_rotation_axis)
 
         for b1, b2 in self.Axis:
@@ -512,25 +511,7 @@ class CrosSCLR(nn.Module):
 
         for i, f in enumerate(time_scale):
             im_q_omega[i, :, :, :, :] = f * im_q_omega[i, :, :, :, :]
-        '''
-        if not self.pretrain and not self.teacher_student:
-            if view == 'joint':
-                return self.encoder_q(im_q)
-            elif view == 'motion':
-                return self.encoder_q_motion(im_q_motion)
-            elif view == 'bone':
-                return self.encoder_q_bone(im_q_bone)
-            elif view == 'acceleration':
-                return self.encoder_q_acceleration(im_q_acceleration)
-            elif view == 'rotation_axis':
-                return self.encoder_q_rotation_axis(im_q_rotation_axis)
-            elif view == 'omega':
-                return self.encoder_q_omega(im_q_omega)
-            elif view == 'all':
-                return (self.encoder_q(im_q) + self.encoder_q_motion(im_q_motion) + self.encoder_q_bone(im_q_bone) + self.encoder_q_acceleration(im_q_acceleration) + self.encoder_q_rotation_axis(im_q_rotation_axis) + self.encoder_q_omega(im_q_omega)) / 6.
-            else:
-                raise ValueError
-        '''
+
         if not self.pretrain and not self.teacher_student:
             if view == 'joint':
                 op,_ = self.encoder_q(im_q)
@@ -599,7 +580,7 @@ class CrosSCLR(nn.Module):
         theta_k = torch.zeros_like(im_k)
         norm_k_bone = torch.zeros_like(im_k_bone)
         norm_k_bone = F.normalize(im_k_bone,dim=1)
-        cp_k = torch.zeros_like(im_k_rotation_axis)#这是归一化后的Bone的叉积
+        cp_k = torch.zeros_like(im_k_rotation_axis)
         norm_k_rotation_axis = torch.zeros_like(im_k_rotation_axis)
 
         for b1, b2 in self.Axis:
@@ -616,7 +597,7 @@ class CrosSCLR(nn.Module):
 
         # compute query features
         q,_ = self.encoder_q(im_q)  # queries: NxC
-        q = F.normalize(q, dim=1)#第二个维度是坐标，归一化
+        q = F.normalize(q, dim=1)
 
         q_motion,_ = self.encoder_q_motion(im_q_motion)
         q_motion = F.normalize(q_motion, dim=1)
@@ -663,9 +644,9 @@ class CrosSCLR(nn.Module):
         # compute logits
         # Einstein sum is more intuitive
         # positive logits: Nx1
-        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)#在dim=0的地方加上一个维度，这个一看就是n组向量的点积，因为一次进去是一个batch
+        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         # negative logits: NxK
-        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])#这个一看就是矩阵相乘
+        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
 
         l_pos_motion = torch.einsum('nc,nc->n', [q_motion, k_motion]).unsqueeze(-1)
         l_neg_motion = torch.einsum('nc,ck->nk', [q_motion, self.queue_motion.clone().detach()])
@@ -683,7 +664,7 @@ class CrosSCLR(nn.Module):
         l_neg_omega = torch.einsum('nc,ck->nk', [q_omega, self.queue_omega.clone().detach()])
 
         # logits: Nx(1+K)
-        logits = torch.cat([l_pos, l_neg], dim=1)#按维度1将两个张量拼接
+        logits = torch.cat([l_pos, l_neg], dim=1)
         logits_motion = torch.cat([l_pos_motion, l_neg_motion], dim=1)
         logits_bone = torch.cat([l_pos_bone, l_neg_bone], dim=1)
         logits_acceleration = torch.cat([l_pos_acceleration, l_neg_acceleration], dim=1)
@@ -759,7 +740,7 @@ class CrosSCLR(nn.Module):
         norm_k_bone = torch.zeros_like(im_k_bone)
         norm_k_bone = F.normalize(im_k_bone,dim=1)
         cp_q = torch.zeros_like(im_q_rotation_axis)
-        cp_k = torch.zeros_like(im_k_rotation_axis)#这是归一化后的Bone的叉积
+        cp_k = torch.zeros_like(im_k_rotation_axis)
         norm_q_rotation_axis = torch.zeros_like(im_q_rotation_axis)
         norm_k_rotation_axis = torch.zeros_like(im_k_rotation_axis)
 
@@ -803,11 +784,9 @@ class CrosSCLR(nn.Module):
                 q_omega,_ = self.encoder_q_omega(im_q_omega)
                 q_omega = F.normalize(q_omega, dim=1)
                 #calculate teacher feature
-                #teacher = (q + q_motion + q_bone + q_acceleration + q_rotation_axis + q_omega) / 6.
                 teacher = torch.cat((q, q_motion, q_bone, q_acceleration, q_rotation_axis, q_omega), 1)
                 teacher = F.normalize(teacher, dim=1)
 
-            #im_viewx = torch.cat((im_k, im_k_motion, im_k_bone, im_k_acceleration, im_k_rotation_axis, im_k_omega), 1)
             student_j,_ = self.encoder_student_j(im_k)
             student_j = F.normalize(student_j, dim=1)
 
@@ -993,8 +972,8 @@ class CrosSCLR(nn.Module):
             k_omega,_ = self.encoder_k_omega(im_k_omega)
             k_omega = F.normalize(k_omega, dim=1)
 
-        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)#两组向量对应位置相乘,qk分别有128个128维向量，向量点乘得到128个相似度
-        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])#矩阵乘法，克隆张量并避免梯度传播，128个向量和bank里的32768个分别相乘
+        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
+        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
 
         l_pos_motion = torch.einsum('nc,nc->n', [q_motion, k_motion]).unsqueeze(-1)
         l_neg_motion = torch.einsum('nc,ck->nk', [q_motion, self.queue_motion.clone().detach()])
@@ -1123,7 +1102,6 @@ class CrosSCLR(nn.Module):
         _, topkdix_acceleration = torch.topk(l_neg_acceleration, topk, dim=1)
         _, topkdix_rotation_axis = torch.topk(l_neg_rotation_axis, topk, dim=1)
         _, topkdix_omega = torch.topk(l_neg_omega, topk, dim=1)
-        #哪个视角要往外传知识就用哪个
 
         topk_onehot_j = torch.zeros_like(l_neg)
         topk_onehot_m = torch.zeros_like(l_neg_motion)
@@ -1155,7 +1133,6 @@ class CrosSCLR(nn.Module):
             pos_mask_r = torch.cat([torch.ones(topk_onehot_r.size(0), 1).cuda(), topk_onehot_r], dim=1)
             pos_mask_o = torch.cat([torch.ones(topk_onehot_o.size(0), 1).cuda(), topk_onehot_o], dim=1)
 
-        #cat后的对比loss
         cat_k = torch.cat((k, k_motion, k_bone, k_acceleration, k_rotation_axis, k_omega), 1)
         cat_k = F.normalize(cat_k, dim=1)
         cat_queue = torch.cat((self.queue.clone().detach(),
@@ -1165,23 +1142,23 @@ class CrosSCLR(nn.Module):
                                self.queue_rotation_axis.clone().detach(),
                                self.queue_omega.clone().detach()),0)
         cat_queue = F.normalize(cat_queue, dim=0)
-        lpj = torch.einsum('nc,nc->n', [qj_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lnj = torch.einsum('nc,ck->nk', [qj_768, cat_queue])#负对是所有queue的拼接
+        lpj = torch.einsum('nc,nc->n', [qj_768, cat_k]).unsqueeze(-1)
+        lnj = torch.einsum('nc,ck->nk', [qj_768, cat_queue])
 
-        lpm = torch.einsum('nc,nc->n', [qm_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lnm = torch.einsum('nc,ck->nk', [qm_768, cat_queue])#负对是所有queue的拼接
+        lpm = torch.einsum('nc,nc->n', [qm_768, cat_k]).unsqueeze(-1)
+        lnm = torch.einsum('nc,ck->nk', [qm_768, cat_queue])
 
-        lpb = torch.einsum('nc,nc->n', [qb_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lnb = torch.einsum('nc,ck->nk', [qb_768, cat_queue])#负对是所有queue的拼接
+        lpb = torch.einsum('nc,nc->n', [qb_768, cat_k]).unsqueeze(-1)
+        lnb = torch.einsum('nc,ck->nk', [qb_768, cat_queue])
 
-        lpa = torch.einsum('nc,nc->n', [qa_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lna = torch.einsum('nc,ck->nk', [qa_768, cat_queue])#负对是所有queue的拼接
+        lpa = torch.einsum('nc,nc->n', [qa_768, cat_k]).unsqueeze(-1)
+        lna = torch.einsum('nc,ck->nk', [qa_768, cat_queue])
 
-        lpr = torch.einsum('nc,nc->n', [qr_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lnr = torch.einsum('nc,ck->nk', [qr_768, cat_queue])#负对是所有queue的拼接
+        lpr = torch.einsum('nc,nc->n', [qr_768, cat_k]).unsqueeze(-1)
+        lnr = torch.einsum('nc,ck->nk', [qr_768, cat_queue])
 
-        lpo = torch.einsum('nc,nc->n', [qo_768, cat_k]).unsqueeze(-1)#这里teacher是所有k的拼接
-        lno = torch.einsum('nc,ck->nk', [qo_768, cat_queue])#负对是所有queue的拼接
+        lpo = torch.einsum('nc,nc->n', [qo_768, cat_k]).unsqueeze(-1)
+        lno = torch.einsum('nc,ck->nk', [qo_768, cat_queue])
 
 
         logits_j = torch.cat([lpj, lnj], dim=1)

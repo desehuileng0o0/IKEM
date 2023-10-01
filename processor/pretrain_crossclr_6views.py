@@ -38,7 +38,7 @@ class CrosSCLR_6views_Processor(PT_Processor):
         loss_rotation_axis_value = []
         loss_omega_value = []
 
-        for [data1, data2], label, frame in loader:#crop里面有random，后面再看，一个输入k一个输入q
+        for [data1, data2], label, frame in loader:
             self.global_step += 1
             # get data
             data1 = data1.float().to(self.dev, non_blocking=True)
@@ -47,8 +47,8 @@ class CrosSCLR_6views_Processor(PT_Processor):
             frame = frame.long().to(self.dev, non_blocking=True)
 
             # forward
-            if epoch <= self.arg.cross_epoch:#没到cross的时候
-                output, output_motion, output_bone, output_acceleration, output_rotation_axis, output_omega, target = self.model(data1, data2, frame)#一个是q的输入，一个是k的输入
+            if epoch <= self.arg.cross_epoch:
+                output, output_motion, output_bone, output_acceleration, output_rotation_axis, output_omega, target = self.model(data1, data2, frame)
                 if hasattr(self.model, 'module'):
                     self.model.module.update_ptr(output.size(0))
                 else:
@@ -123,12 +123,12 @@ class CrosSCLR_6views_Processor(PT_Processor):
                 loss_acceleration = (loss_ab + loss_aj + loss_am + loss_ar + loss_ao) / 5.
                 loss_rotation_axis = (loss_rj + loss_rm + loss_rb + loss_ra + loss_ro) / 5.
                 loss_omega = (loss_oj + loss_om + loss_ob + loss_oa + loss_or) / 5.
-                loss = loss.mean()# + self.loss(output_j, targetc)
-                loss_motion = loss_motion.mean()# + self.loss(output_m, targetc)
-                loss_bone = loss_bone.mean()# + self.loss(output_b, targetc)
-                loss_acceleration = loss_acceleration.mean()# + self.loss(output_a, targetc)
-                loss_rotation_axis = loss_rotation_axis.mean()# + self.loss(output_r, targetc)
-                loss_omega = loss_omega.mean()# + self.loss(output_o, targetc)
+                loss = loss.mean() + self.loss(output_j, targetc)
+                loss_motion = loss_motion.mean() + self.loss(output_m, targetc)
+                loss_bone = loss_bone.mean() + self.loss(output_b, targetc)
+                loss_acceleration = loss_acceleration.mean() + self.loss(output_a, targetc)
+                loss_rotation_axis = loss_rotation_axis.mean() + self.loss(output_r, targetc)
+                loss_omega = loss_omega.mean() + self.loss(output_o, targetc)
                 
                 self.iter_info['loss'] = loss.data.item()
                 self.iter_info['loss_motion'] = loss_motion.data.item()

@@ -45,7 +45,7 @@ class LE_Processor(Processor):
                 if name not in ['fc.weight', 'fc.bias']:
                     param.requires_grad = False
             self.num_grad_layers += 2
-        if hasattr(self.model, 'encoder_q_motion'):#返回TF，判断这个属性是否存在
+        if hasattr(self.model, 'encoder_q_motion'):
             for name, param in self.model.encoder_q_motion.named_parameters():
                 if name not in ['fc.weight', 'fc.bias']:
                     param.requires_grad = False
@@ -111,11 +111,6 @@ class LE_Processor(Processor):
                 if name not in ['fc.weight', 'fc.bias']:
                     param.requires_grad = False
             self.num_grad_layers += 2
-        #if hasattr(self.model, 'late_fusion'):
-            #for name, param in self.model.late_fusion.named_parameters():
-                #if name not in ['0.weight', '0.bias']:
-                    #param.requires_grad = False
-            #self.num_grad_layers += 2
 
         self.loss = nn.CrossEntropyLoss()
         
@@ -150,8 +145,8 @@ class LE_Processor(Processor):
             self.lr = self.arg.base_lr
 
     def show_topk(self, k):
-        rank = self.result.argsort()#从小到大排列，提取index
-        hit_top_k = [l in rank[i, -k:] for i, l in enumerate(self.label)]#第i个样本，label是l，k是1，l最后一个在最后一个元素里出现了，就是true
+        rank = self.result.argsort()
+        hit_top_k = [l in rank[i, -k:] for i, l in enumerate(self.label)]
         accuracy = sum(hit_top_k) * 1.0 / len(hit_top_k)
         self.io.print_log('\tTop{}: {:.2f}%'.format(k, 100 * accuracy))
 
@@ -172,15 +167,12 @@ class LE_Processor(Processor):
         loss_value = []
         for data, label, frame in loader:
             self.global_step += 1
-            # get data
-            #tsne_label[(idx*128):((idx+1)*128), 0] = label
             data = data.float().to(self.dev, non_blocking=True)
             label = label.long().to(self.dev, non_blocking=True)
             frame = frame.long().to(self.dev, non_blocking=True)
 
             # forward
             output = self.model(data, None, frame, view=self.arg.view)
-            #tsne_data[(idx*128):((idx+1)*128), 0:256] = feature.cpu().numpy()
             loss = self.loss(output, label)
 
             # backward

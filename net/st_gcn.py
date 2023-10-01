@@ -14,16 +14,15 @@ class Model(nn.Module):
         super().__init__()
 
         # load graph
-        self.graph = Graph(**graph_args)#实例化一个图并且把参数传入，双星号是将参数以字典的形式传入
+        self.graph = Graph(**graph_args)
         A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
-        self.register_buffer('A', A)#反向传播不需要被更新的，可以通model.buffers() 返回
+        self.register_buffer('A', A)
 
         # build networks
-        spatial_kernel_size = A.size(0)#分为root,close,further三个子集，每个子集有一个对应的权重
-        temporal_kernel_size = 9#时间
-        kernel_size = (temporal_kernel_size, spatial_kernel_size)#9，3的卷积核
-        self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))#输入的shape是3*25，这里只是先实例化
-        #print(A.size(1))
+        spatial_kernel_size = A.size(0)
+        temporal_kernel_size = 9
+        kernel_size = (temporal_kernel_size, spatial_kernel_size)
+        self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
         kwargs0 = {k: v for k, v in kwargs.items() if k != 'dropout'}
         self.st_gcn_networks = nn.ModuleList((
             st_gcn(in_channels, hidden_channels, kernel_size, 1, residual=False, **kwargs0),
@@ -43,7 +42,7 @@ class Model(nn.Module):
         if edge_importance_weighting:
             self.edge_importance = nn.ParameterList([
                 nn.Parameter(torch.ones(self.A.size()))
-                for i in self.st_gcn_networks#每个stgcn模块都有自己的参数用于训练
+                for i in self.st_gcn_networks
             ])
         else:
             self.edge_importance = [1] * len(self.st_gcn_networks)
@@ -55,21 +54,21 @@ class Model(nn.Module):
         N, C, T, V, M = x.size()
         x = x.permute(0, 4, 3, 1, 2).contiguous()
         x = x.view(N * M, V * C, T)
-        x = self.data_bn(x)#将一个关节在不同帧下的位置特征进行归一化。应该是归一化到[-1，1]
+        x = self.data_bn(x)
         x = x.view(N, M, V, C, T)
         x = x.permute(0, 1, 3, 4, 2).contiguous()
-        x = x.view(N * M, C, T, V)#保证显存连续
+        x = x.view(N * M, C, T, V)
 
         # forward
         for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
             x, _ = gcn(x, self.A * importance)
 
-        # global pooling256,256,13,25
-        x = F.avg_pool2d(x, x.size()[2:])#256,256,1,1
-        x = x.view(N, M, -1).mean(dim=1)#128,256
+        # global pooling
+        x = F.avg_pool2d(x, x.size()[2:])
+        x = x.view(N, M, -1).mean(dim=1)
         
         # prediction
-        y = self.fc(x)#128,featuredim
+        y = self.fc(x)
         y = y.view(y.size(0), -1)
 
         return y,x
@@ -109,15 +108,15 @@ class st_gcn(nn.Module):
                  residual=True):
         super().__init__()
 
-        assert len(kernel_size) == 2#二维
-        assert kernel_size[0] % 2 == 1#奇数
-        padding = ((kernel_size[0] - 1) // 2, 0)#只在时间维度padding，时间维度卷积核为9*1，padding就是4
+        assert len(kernel_size) == 2
+        assert kernel_size[0] % 2 == 1
+        padding = ((kernel_size[0] - 1) // 2, 0)
 
         self.gcn = ConvTemporalGraphical(in_channels, out_channels,
                                          kernel_size[1])
 
         self.tcn = nn.Sequential(
-            nn.BatchNorm2d(out_channels),#relu的前置步骤，不会因为数据过大导致网络不稳定
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(
                 out_channels,
@@ -125,7 +124,7 @@ class st_gcn(nn.Module):
                 (kernel_size[0], 1),
                 (stride, 1),
                 padding,
-            ),#二维卷积，不难理解
+            ),
             nn.BatchNorm2d(out_channels),
             nn.Dropout(dropout, inplace=True),
         )

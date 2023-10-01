@@ -35,7 +35,7 @@ class CrosSCLR_3views_Processor(PT_Processor):
         loss_motion_value = []
         loss_bone_value = []
 
-        for [data1, data2], label, frame in loader:#crop里面有random，后面再看，一个输入k一个输入q
+        for [data1, data2], label, frame in loader:
             self.global_step += 1
             # get data
             data1 = data1.float().to(self.dev, non_blocking=True)
@@ -44,8 +44,8 @@ class CrosSCLR_3views_Processor(PT_Processor):
             frame = frame.long().to(self.dev, non_blocking=True)
 
             # forward
-            if epoch <= self.arg.cross_epoch:#没到cross的时候
-                output, output_motion, output_bone, target = self.model(data1, data2, frame)#一个是q的输入，一个是k的输入
+            if epoch <= self.arg.cross_epoch:
+                output, output_motion, output_bone, target = self.model(data1, data2, frame)
                 if hasattr(self.model, 'module'):
                     self.model.module.update_ptr(output.size(0))
                 else:
@@ -68,8 +68,6 @@ class CrosSCLR_3views_Processor(PT_Processor):
                     self.model.module.update_ptr(output_jm.size(0))
                 else:
                     self.model.update_ptr(output_jm.size(0))
-                #output是128行，列分别是和正对相似度s，和bank里其他负对相似度s，以及两个视角下所有负对的ss（就是前面的bank的列按元素相乘）。
-                #mask也是128行，第一列全是1，后面重复两个bank的列数，均是挖掘出的正对，对应位置为1.
 
                 loss_jm = - (F.log_softmax(output_jm, dim=1) * mask_jm).sum(1) / mask_jm.sum(1)
                 loss_jb = - (F.log_softmax(output_jb, dim=1) * mask_jb).sum(1) / mask_jb.sum(1)
@@ -80,9 +78,9 @@ class CrosSCLR_3views_Processor(PT_Processor):
                 loss = (loss_jm + loss_jb) / 2.
                 loss_motion = (loss_mj + loss_mb) / 2.
                 loss_bone = (loss_bj + loss_bm) / 2.
-                loss = loss.mean()# + self.loss(output_j, targetc)
-                loss_motion = loss_motion.mean()# + self.loss(output_m, targetc)
-                loss_bone = loss_bone.mean()# + self.loss(output_b, targetc)
+                loss = loss.mean() + self.loss(output_j, targetc)
+                loss_motion = loss_motion.mean() + self.loss(output_m, targetc)
+                loss_bone = loss_bone.mean() + self.loss(output_b, targetc)
 
                 self.iter_info['loss'] = loss.data.item()
                 self.iter_info['loss_motion'] = loss_motion.data.item()

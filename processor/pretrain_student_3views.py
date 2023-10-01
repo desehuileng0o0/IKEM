@@ -38,7 +38,6 @@ class TS_Processor(PT_Processor):
             label = label.long().to(self.dev, non_blocking=True)
             frame = frame.long().to(self.dev, non_blocking=True)
 
-            # forward这边就没有是不是cross的判断了
             output_jx, output_mx, output_bx,\
                 mask_jx, mask_mx, mask_bx= self.model(data1, data2, frame, cross=True, topk=self.arg.topk, context=self.arg.context)
             if hasattr(self.model, 'module'):
