@@ -1,5 +1,5 @@
-work_dir: /cvhci/temp/ywei2/work_dir/6_120/00_le_o_3lock_300
-weights: /cvhci/temp/ywei2/work_dir/6_120/00_3lock_300/epoch300_model.pt
+work_dir: /cvhci/temp/ywei2/work_dir/6_120/XXXXXXXXXX
+weights: /cvhci/temp/ywei2/work_dir/6_120/6_120/XXXXXXXXXX
 ignore_weights: [encoder_q.fc, encoder_q_motion.fc, encoder_q_bone.fc, encoder_q_acceleration.fc, encoder_q_rotation_axis.fc, encoder_q_omega.fc, encoder_k, encoder_k_motion, encoder_k_bone, encoder_k_acceleration, encoder_k_rotation_axis, encoder_k_omega, queue, queue_motion, queue_bone, queue_acceleration, queue_rotation_axis, queue_omega, mlp2j, mlp2m, mlp2b, mlp2a, mlp2r, mlp2o]
 
 # feeder
