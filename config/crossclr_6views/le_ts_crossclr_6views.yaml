@@ -1,5 +1,5 @@
-work_dir: /cvhci/temp/ywei2/work_dir/6_120/XXXXXXXXXX
-weights: /cvhci/temp/ywei2/work_dir/6_120/XXXXXXXXXX
+work_dir: /cvhci/temp/ywei2/work_dir/6_120/student
+weights: /cvhci/temp/ywei2/work_dir/6_120/teacher
 ignore_weights: [encoder_q, encoder_q_motion, encoder_q_bone, encoder_q_acceleration, encoder_q_rotation_axis, encoder_q_omega, encoder_student_j.fc, encoder_student_m.fc, encoder_student_b.fc, queue, queue_motion, queue_bone, queue_acceleration, queue_rotation_axis, queue_omega, queue_teacher]
 
 # feeder
