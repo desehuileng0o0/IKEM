@@ -1,13 +1,13 @@
-work_dir: /cvhci/temp/ywei2/work_dir/6_120/00_xsub_3lock_150-300_onlyloss1
-weights: /cvhci/temp/ywei2/work_dir/6_120/00_xsub_3lock_300/epoch150_model.pt
+work_dir: /cvhci/temp/ywei2/work_dir/6_120/XXXXXXXXXX
+#weights: /cvhci/temp/ywei2/work_dir/6_120/XXXXXXXXXX
 
 # feeder
 train_feeder: feeder.ntu_feeder.Feeder_dual
 train_feeder_args:
   #data_path: /lsdf/data/activity/NTU_RGBD/zipped/zipped_skeleton_csv/NTU120_frame50/xsub/train_position.npy
   #label_path: /lsdf/data/activity/NTU_RGBD/zipped/zipped_skeleton_csv/NTU-RGB-D-120/xsub/train_label.pkl
-  data_path: /cvhci/temp/ywei2/NTU120_frame50/xsub/train_position.npy
-  label_path: /cvhci/temp/ywei2/NTU-RGB-D-120/xsub/train_label.pkl
+  data_path: /cvhci/temp/ywei2/NTU120_frame50/xsetup/train_position.npy
+  label_path: /cvhci/temp/ywei2/NTU-RGB-D-120/xsetup/train_label.pkl
   shear_amplitude: 0.5
   temperal_padding_ratio: 6
   camera_view: -1
@@ -41,19 +41,19 @@ nesterov: False
 weight_decay: 1e-4
 base_lr: 0.1
 optimizer: SGD
-step: [100]
+step: [250]
 
 # training
-device: [1]
+device: [0]
 batch_size: 128
 test_batch_size: 128
-num_epoch: 150
+num_epoch: 300
 start_epoch: 0
 
 # cross training
 topk: 1
 view: 'all'
-cross_epoch: 0
+cross_epoch: 150
 context: True
 
 # log
